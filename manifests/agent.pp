@@ -44,6 +44,10 @@ class tenable::agent (
 ) {
   # Grab the current version of the Nessus agent.
   $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
+  # fail if group is not set
+  if $group == undef {
+    fail('Tenable group parameter was not found.')
+  }
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 {
     # RHEL Releases

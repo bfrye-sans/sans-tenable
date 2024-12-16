@@ -11,6 +11,7 @@ class tenable::params {
   $proxy_port = undef
   $host = undef
   $cloud = true
+  $group = undef
   }
 
   # Scanner Params
