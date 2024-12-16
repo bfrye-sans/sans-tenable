@@ -17,6 +17,7 @@ class tenable (
   String $scanner_service_ensure = 'running',
 ) {
   class { 'tenable::agent':
+    version => $agent_version,
     key => $agent_key,
     group => $agent_group,
     service_ensure => $agent_service_ensure,
