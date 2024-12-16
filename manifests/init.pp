@@ -8,6 +8,9 @@ class tenable (
     service_ensure       => $tenable::params::service_ensure,
     proxy_host           => $tenable::params::proxy_host,
     proxy_port           => $tenable::params::proxy_port,
+    host                 => $tenable::params::host,
+    cloud                => $tenable::params::cloud,
+    group                => $tenable::params::group,
   }
 
   class { 'tenable::security_center':
