@@ -32,16 +32,15 @@
 #   }
 
 class tenable::agent (
-  String $group = tenable::agent::params::group,
-  String $key = tenable::agent::params::key,
+  Optional[String] $group = tenable::agent::params::group,
+  Optional[String] $key = tenable::agent::params::key,
   String $service_ensure = tenable::agent::params::service_ensure,
   Boolean $service_enable = tenable::agent::params::service_enable,
   Integer $port = tenable::agent::params::port,
-  String $proxy_host = tenable::agent::params::proxy_host,
-  Integer $proxy_port = tenable::agent::params::proxy_port,
-  String $host = tenable::agent::params::host,
-  Boolean $cloud = tenable::agent::params::cloud,
-  Boolean $manage_updates = tenable::agent::params::manage_updates,
+  Optional[String] $proxy_host = tenable::agent::params::proxy_host,
+  Optional[Integer] $proxy_port = tenable::agent::params::proxy_port,
+  Optional[String] $host = tenable::agent::params::host,
+  Optional[Boolean] $cloud = tenable::agent::params::cloud,
 ) {
   # Grab the current version of the Nessus agent.
   $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
@@ -50,7 +49,7 @@ class tenable::agent (
     fail('If Tenable cloud is not used then host parameter must be set.')
   }
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if versioncmp($current_version, $newest_version) < 0 and $manage_agent_updates == true {
+  if versioncmp($current_version, $newest_version) < 0 {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture.
