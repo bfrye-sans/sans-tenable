@@ -30,7 +30,6 @@
 #
 #     manage_agent_updates => true,
 #   }
-include tenable::params
 
 class tenable::agent (
   String $tenable_agent_version = $tenable::agent_version,
