@@ -45,13 +45,10 @@ class tenable::agent (
 ) {
   # Grab the current version of the Nessus agent.
   String $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
-
-  if $cloud == false and $host == undef {
-    fail('If Tenable cloud is not used then host parameter must be set.')
-  }
+  Notice($current_version)  
   # Find out the newest version of the Nessus agent.
   String $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip %>')
-
+  Notice($newest_version)
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $newest_version) < 0 {
     # RHEL Releases
