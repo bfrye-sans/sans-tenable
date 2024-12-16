@@ -32,7 +32,7 @@
 
 class tenable::agent (
   String $key = $tenable::params::agent_key,
-  String $group = $tenable::params::group,
+  String $group = $tenable::params::agent_group,
   String $service_ensure = $tenable::params::service_ensure,
   Boolean $service_enable = $tenable::params::service_enable,
   Integer $port = $tenable::params::agent_port,
@@ -47,6 +47,13 @@ class tenable::agent (
   if $group == undef {
     fail('Tenable group parameter was not found.')
   }
+  # fail if no key is set
+  if $key == undef {
+    fail('Tenable key is required to register agents.')
+  }
+  if $cloud == false and $host == undef {
+    fail('If Tenable cloud is not used then host parameter must be set.')
+  }
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 {
     # RHEL Releases
@@ -57,7 +64,7 @@ class tenable::agent (
       # Find out the newest version of the Nessus agent.
       $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip %>')
       # If the newest version is greater than the current version, download and install it.
-      if versioncmp($newest_version_version, $version) > 0 {
+      if versioncmp($newest_version, $version) > 0 {
         exec { 'download_nessus_agent':
           command => "rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
         }
