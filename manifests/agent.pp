@@ -47,7 +47,7 @@ class tenable::agent (
     command => '/usr/bin/rpm -qa | grep -q NessusAgent > /tmp/nessus_agent_output',
   }
 
-  $raw_output = file('/tmp/nessus_agent_output'), default => 'NessusAgent-0.0.0-0.x86_64'
+  $raw_output = file('/tmp/nessus_agent_output', default => 'NessusAgent-0.0.0-0.x86_64')
 
   $current_version = regsubst($raw_output, '^NessusAgent-(\d+\.\d+\.\d+)-\d+\..*', '\1', false)
 
