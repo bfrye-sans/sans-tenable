@@ -44,7 +44,12 @@ class tenable::agent (
   String $version = 'latest',
 ) {
   # Grab the current version of the Nessus agent.
-  $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
+  exec { 'get_current_version':
+    command => '/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'',
+    path    => '/usr/bin:/usr/sbin:/bin:/sbin',
+    onlyif  => '/opt/nessus/sbin/nessuscli -v',
+    logoutput => true,
+  }
 
   if $cloud == false and $host == undef {
     fail('If Tenable cloud is not used then host parameter must be set.')
