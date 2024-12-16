@@ -42,11 +42,9 @@ class tenable::agent (
   Optional[String] $host = undef,
   Optional[Boolean] $cloud = false,
   String $version = 'latest',
-  String $current_version,
-  String $newest_version,
 ) {
   # Grab the current version of the Nessus agent.
-  $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
+  String $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
 
   if $cloud == false and $host == undef {
     fail('If Tenable cloud is not used then host parameter must be set.')
@@ -59,7 +57,7 @@ class tenable::agent (
       $major_release = $facts['os']['release']['major']
       $arch = $facts['os']['architecture']
       # Find out the newest version of the Nessus agent.
-      $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip %>')
+      String $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip %>')
       # If the newest version is greater than the current version, download and install it.
       if versioncmp($newest_version, $version) > 0 {
         exec { 'download_nessus_agent':
