@@ -77,7 +77,7 @@ class tenable::agent (
   exec { 'register_nessus_agent':
     command => "/opt/nessus_agent/sbin/nessuscli agent link --key=${key} --groups=${group} --port=${port}" + 
         ($proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" }) +
-        ($proxy_port ? { undef => '', default => " --proxy-port=${proxy_)port}" }) +
+        ($proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" }) +
         ($host ? { undef => '', default => " --host=${host}" }) +
         ($cloud ? { undef => '', default => " --cloud" }),
       unless  => "/opt/nessus_agent/sbin/nessuscli agent status | grep -q 'None'",
