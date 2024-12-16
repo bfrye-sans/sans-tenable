@@ -33,7 +33,6 @@
 class tenable::agent (
   String $key = $tenable::params::agent_key,
   String $group = $tenable::params::group,
-  Boolean $manage_agent_updates = $tenable::params::manage_agent_updates,
   String $service_ensure = $tenable::params::service_ensure,
   Boolean $service_enable = $tenable::params::service_enable,
   Integer $port = $tenable::params::agent_port,
