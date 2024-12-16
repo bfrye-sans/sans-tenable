@@ -27,19 +27,22 @@
 #     port                 => 8834,
 #     key                  => 'your-activation-key',
 #     group                => 'your-group',
+#
 #     manage_agent_updates => true,
 #   }
+include tenable::params
 
 class tenable::agent (
-  String $key = $tenable::params::agent_key,
-  String $group = $tenable::params::agent_group,
-  String $service_ensure = $tenable::params::service_ensure,
-  Boolean $service_enable = $tenable::params::service_enable,
-  Integer $port = $tenable::params::agent_port,
-  String $proxy_host = $tenable::params::proxy_host,
-  Optional[Integer] $proxy_port = $tenable::params::proxy_port,
-  String $host = $tenable::params::host,
-  Boolean $cloud = $tenable::params::cloud,
+  String $tenable_agent_version = $tenable::agent_version,
+  Integer $tenable_agent_port = $tenable::agent_port,
+  Optional[String] $tenable_agent_key = $tenable::agent_key,
+  Boolean $tenable_agent_service_enable = $tenable::agent_service_enable,
+  String $tenable_agent_service_ensure = $tenable::agent_service_ensure,
+  Optional[String] $tenable_agent_proxy_host = $tenable::agent_proxy_host,
+  Optional[Integer] $tenable_agent_proxy_port = $tenable::agent_proxy_port,
+  Optional[String] $tenable_agent_host = $tenable::agent_host,
+  Boolean $tenable_agent_cloud = $tenable::agent_cloud,
+  Optional[String] $tenable_agent_group = $tenable::agent_group,
 ) {
   # Grab the current version of the Nessus agent.
   $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
