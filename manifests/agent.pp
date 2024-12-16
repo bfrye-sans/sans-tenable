@@ -41,6 +41,7 @@ class tenable::agent (
   Optional[Integer] $proxy_port = tenable::agent::params::proxy_port,
   Optional[String] $host = tenable::agent::params::host,
   Optional[Boolean] $cloud = tenable::agent::params::cloud,
+  String $version = tenable::agent::params::version,
 ) {
   # Grab the current version of the Nessus agent.
   $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
