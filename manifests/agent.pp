@@ -44,8 +44,15 @@ class tenable::agent (
   String $version = 'latest',
 ) {
   # Grab the current version of the Nessus agent.
-  String $current_version = inline_template('<%= `/opt/nessus/sbin/nessuscli -v | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
-
+  String $current_version = inline_template('<%=
+    begin
+      output = %x[/opt/nessus/sbin/nessuscli -v 2>/dev/null | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'].strip
+      output.empty? ? "Not Installed" : output
+    rescue
+      "Not Installed"
+    end
+  %>')
+  
   notify { "Current Nessus Version":
     message => "The current Nessus version is: ${current_version}",
   }
