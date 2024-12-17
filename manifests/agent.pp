@@ -47,7 +47,7 @@ class tenable::agent (
 ) {
   # Define paths
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
-  $temp_output     = '/tmp/nessus_version_output.txt'
+  $current_version     = '/tmp/nessus_version_output.txt'
 
   # Ensure the facts.d directory exists on the agent
   file { '/opt/puppetlabs/facter/facts.d':
