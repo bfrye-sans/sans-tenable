@@ -49,9 +49,12 @@ class tenable::agent (
 # Extract the version of NessusAgent or return "Not Installed"
 $current_version = inline_template('<%=
   begin
-    # Run rpm query and filter the version
-    output = %x{/usr/bin/rpm -q NessusAgent 2>/dev/null | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'}.strip
-    output.empty? ? "Not Installed" : output
+    output = %x{/usr/bin/rpm -q NessusAgent 2>/dev/null}.strip
+    if output =~ /NessusAgent-(\d+\.\d+\.\d+)/
+      $1 # Return captured version
+    else
+      "Not Installed"
+    end
   rescue
     "Not Installed"
   end
