@@ -94,13 +94,18 @@ class tenable::agent (
   }
 
   # Register agent if it's not already linked
-  exec { 'register_nessus_agent':
-    command => "/opt/nessus_agent/sbin/nessuscli agent link --key=${key} --groups=${group} --port=${port}" + 
-        ($proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" }) +
-        ($proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" }) +
-        ($host ? { undef => '', default => " --host=${host}" }) +
-        ($cloud ? { undef => '', default => " --cloud" }),
-      unless  => "/opt/nessus_agent/sbin/nessuscli agent status | grep -q 'None'",
-    require => Service['nessusagent'],
-  }
+exec { 'register_nessus_agent':
+  command => sprintf(
+    "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s",
+    $key,
+    $group,
+    $port,
+    "${proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" }}" +
+    "${proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" }}" +
+    "${host ? { undef => '', default => " --host=${host}" }}" +
+    "${cloud ? { undef => '', default => " --cloud" }}"
+  ),
+  unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "None"',
+  require => Service['nessusagent'],
+}
 }
