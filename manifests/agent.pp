@@ -49,6 +49,13 @@ class tenable::agent (
   $current_version     = '/tmp/nessus_version_output.txt'
 
   # Use the output file's content directly in the comparison
+  if !file_exists($current_version) {
+    exec { 'initialize_nessus_version':
+      command => "echo 'Not Installed' > ${current_version}",
+      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+      creates => $current_version,
+    }
+  }
   exec { 'compare_nessus_version':
     command => "bash -c 'if [ \"$(cat ${current_version})\" = \"Not Installed\" ] || [ \"$(cat ${current_version})\" \< \"${version}\" ]; then echo \"Update Required\"; else echo \"Up-to-date\"; fi'",
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
