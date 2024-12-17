@@ -73,7 +73,7 @@ class tenable::scanner (
 
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) < 0) {
+  if (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture. 
@@ -116,3 +116,6 @@ class tenable::scanner (
         enable  => $service_enable,
         require => Package['nessusd'],
       }
+    }
+  }
+}

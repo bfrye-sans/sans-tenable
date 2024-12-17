@@ -58,7 +58,7 @@ class tenable::security_center (
   File['/opt/sc/daemons/license.key'] -> Service['nessusd']
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) < 0) {
+  if (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture. 
@@ -86,7 +86,7 @@ class tenable::security_center (
           onlyif => '/usr/bin/test -d /opt/sc',
         }
       }
-      
+
       # Install the package
       Package { 'SecurityCenter':
         ensure   => 'installed',
@@ -102,9 +102,26 @@ class tenable::security_center (
         require => Package['SecurityCenter'],
       }
 
+      # Fix up a few php settings before we start the service
+      file_line { 'php_memory_limit':
+        ensure  => present,
+        path    => '/opt/sc/support/etc/php.ini',
+        line    => 'memory_limit = 2000M',
+        match   => '^memory_limit =',
+        require => Package['SecurityCenter'],
+      }
+
+      file_line { 'php_post_max_size':
+        ensure  => present,
+        path    => '/opt/sc/support/etc/php.ini',
+        line    => 'post_max_size = 2000M',
+        match   => '^post_max_size =',
+        require => Package['SecurityCenter'],
+      }
+
       # Generate the version file dynamically after installation/upgrade
       exec { 'reset_nessus_security_center_version':
-        command     => 'rpm -q SecurityCenter > /dev/null 2>&1; then rpm -q SecurityCenter | sed -n \'s/SecurityCenter-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_security_center_version=\\1/p\' > ${file_path} || echo \"nessus_security_center_version=0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt',
+        command     => "rpm -q SecurityCenter > /dev/null 2>&1; then rpm -q SecurityCenter | sed -n 's/SecurityCenter-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_security_center_version=\\1/p' > ${file_path} || echo \"nessus_security_center_version=0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt",
         path        => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
         require     => File['/opt/puppetlabs/facter/facts.d'],
       }
