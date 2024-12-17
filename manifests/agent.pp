@@ -43,16 +43,23 @@ class tenable::agent (
   Optional[Boolean] $cloud = false,
   String $version = 'latest',
 ) {
-  # Grab the current version of the Nessus agent.
-  String $current_version = inline_template('<%=
-    begin
-      output = %x[/opt/nessus/sbin/nessuscli -v 2>/dev/null | sed -n \'s/.*Nessus \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'].strip
-      output.empty? ? "Not Installed" : output
-    rescue
-      "Not Installed"
-    end
-  %>')
-  
+
+  # Run `rpm` to check the package and save output to a file
+  exec { 'get_rpm_version':
+    command => '/usr/bin/rpm -q NessusAgent | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\' > /tmp/nessus_version',
+    path    => ['/bin', '/usr/bin', '/sbin', '/usr/sbin'],
+    creates => '/tmp/nessus_version', # Only runs if the file doesn't exist
+  }
+
+  # Read the version from the output file or default to "Not Installed"
+  $current_version = file('/tmp/nessus_version', default => 'Not Installed')
+
+  # Notify the result
+  notify { "RPM Package Version":
+    message => "The current installed version of NessusAgent is: ${current_version}",
+  }
+
+
   notify { "Current Nessus Version":
     message => "The current Nessus version is: ${current_version}",
   }
