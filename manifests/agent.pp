@@ -109,6 +109,6 @@ exec { 'register_nessus_agent':
     $cloud ? { undef => '', default => " --cloud" }
   ),
   unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "None"',
-  require => Service['nessusagent'],
+#  require => Service['nessusagent'],
 }
 }
