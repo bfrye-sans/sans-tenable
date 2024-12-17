@@ -108,7 +108,7 @@ class tenable::agent (
       }
 
       # Generate the version file dynamically after installation/upgrade
-      exec { 'get_nessus_agent_version':
+      exec { 'reset_nessus_agent_version':
         command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt || echo "Not Installed" > /opt/puppetlabs/facter/facts.d/nessus_version.txt',
         creates => $file_path,
         path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
