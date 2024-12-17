@@ -59,7 +59,9 @@ $current_version = inline_template('<%=
     "Not Installed"
   end
 %>')
-
+notify { 'Debug RPM Versions':
+  message => inline_template('<%= %x{/usr/bin/rpm -q NessusAgent 2>/dev/null}.strip %>'),
+}
 # Use the extracted value in a notify resource
 notify { "Current NessusAgent Version":
   message => "The current version of NessusAgent is: ${current_version}",
