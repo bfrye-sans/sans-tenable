@@ -66,7 +66,7 @@ class tenable::agent (
   }
 
   exec { 'check_nessuscli_exists':
-    command => "test -x /opt/nessus_agent/sbin/nessuscli || echo "Not Installed" > ${file_path}",
+    command => "test -x /opt/nessus_agent/sbin/nessuscli || echo 'Not Installed' > ${file_path}",
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     creates => $file_path,
   }
