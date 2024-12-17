@@ -44,25 +44,21 @@ class tenable::agent (
   String $version = 'latest',
 ) {
 
-  # Run `rpm` to check the package and save output to a file
-  exec { 'get_rpm_version':
-    command => '/usr/bin/rpm -q NessusAgent | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\' > /var/log/puppetlabs/puppet/nessus_version',
-    path    => ['/bin', '/usr/bin', '/sbin', '/usr/sbin'],
-    creates => '/tmp/nessus_version', # Only runs if the file doesn't exist
-  }
-
-  # Read the version from the output file or default to "Not Installed"
-  $current_version = file('/var/log/puppetlabs/puppet/nessus_version', default => 'Not Installed')
+  # Use inline_template to fetch the version or fallback to default
+  String $current_version = inline_template('<%=
+    begin
+      output = %x[/usr/bin/rpm -q NessusAgent 2>/dev/null | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'].strip
+      output.empty? ? "Not Installed" : output
+    rescue
+      "Not Installed"
+    end
+  %>')
 
   # Notify the result
   notify { "RPM Package Version":
     message => "The current installed version of NessusAgent is: ${current_version}",
   }
 
-
-  notify { "Current Nessus Version":
-    message => "The current Nessus version is: ${current_version}",
-  }
   # Find out the newest version of the Nessus agent.
 #  String $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip.empty? ? "default_value" %x[Not Installed].strip %>')
 
