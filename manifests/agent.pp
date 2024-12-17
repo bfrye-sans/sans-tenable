@@ -115,14 +115,8 @@ class tenable::agent (
         path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
         require => Exec['get_nessus_agent_version'],
       }
-    }
-  } elsif versioncmp($current_version, $version) == 0 {
-    notify { "Nessus Agent is already at the latest version: ${version}": }
-  } else {
-    fail('Unsupported OS family.')
-  }
 
-  # Configure agent
+        # Configure agent
   service { 'nessusagent':
     ensure  => $service_ensure,
     enable  => $service_enable,
@@ -143,5 +137,9 @@ class tenable::agent (
     ),
     unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "Link status: Connected"',
     require => Service['nessusagent'],
+  }
+    }
+  } elsif {
+    notify { "Nessus Agent is already at the latest version: ${version}": }
   }
 }
