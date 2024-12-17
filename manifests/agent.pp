@@ -57,7 +57,7 @@ class tenable::agent (
   }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if ($current_version == 'Not Installed') or (versioncmp($current_version, $desired_version) < 0) {
+  if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Download the package from Tenable API
