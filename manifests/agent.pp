@@ -42,6 +42,8 @@ class tenable::agent (
   Optional[String] $host = undef,
   Optional[Boolean] $cloud = false,
   String $version = 'latest',
+  $major_release = $facts['os']['release']['major'],
+  $arch = $facts['os']['architecture'],
 ) {
 
   # Use inline_template to fetch the version or fallback to default
@@ -59,34 +61,23 @@ class tenable::agent (
     message => "The current installed version of NessusAgent is: ${current_version}",
   }
 
-
-  # Find out the newest version of the Nessus agent.
-  $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | grep -o \'"version":"[^"]*"\' | head -n 1 | sed \'s/.*"version":"\\([^"]*\\)".*/\\1/\'`.strip %>')
-  notify { "Newest Nessus Agent Version":
-    message => "The newest version of Nessus Agent is: ${newest_version}",
-  }
-
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
-    notify { "Nessus Agent Update Available":
-      message => "An update is available for the Nessus Agent. Current version: ${current_version}, Newest version: ${newest_version}",
-    }
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture.
       $major_release = $facts['os']['release']['major']
       $arch = $facts['os']['architecture']
-      # If the newest version is greater than the current version, download and install it.
-      if versioncmp($newest_version, $version) > 0 {
-        exec { 'download_nessus_agent':
-          command => "rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
-        }
-
-        notify { "Nessus Agent version: ${newest_version} installed.": }
+      exec { 'download_nessus_agent':
+        command => "rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
       }
-    } else {
-      fail('Unsupported OS family.')
-    }
+
+      notify { "Nessus Agent version: ${newest_version} installed.": }
+      }
+  } elsif $current_version == $version {
+    notify { "Nessus Agent is already at the latest version: ${version}": }
+  } else {
+    fail('Unsupported OS family.')
   }
 
   # Configure agent
