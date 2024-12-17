@@ -52,10 +52,7 @@ class tenable::agent (
   }
 
   # Read the version from the output file or default to "Not Installed"
-  $current_version = $file_output ? {
-    undef => 'Not Installed',
-    default => file('/var/log/puppetlabs/puppet/nessus_version'),
-  }
+  $current_version = file('/var/log/puppetlabs/puppet/nessus_version').content || 'Not Installed'
 
   # Notify the result
   notify { "RPM Package Version":
