@@ -66,7 +66,7 @@ class tenable::agent (
   }
 
   # Ensure the fact file has proper permissions
-  file { '/opt/puppetlabs/facter/facts.d/nessus_version.txt':
+  file { $file_path:
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
@@ -76,24 +76,12 @@ class tenable::agent (
 
   if $facts['nessus_version'] {
     $current_version = $facts['nessus_version']
-  }
-  
-  notify { 'NessusAgent Version':
-    message => "Current NessusAgent version: ${current_version}",
-  }
-
-  if ($current_version == '0.0.0') or (versioncmp($current_version, $version) < 0) {
-    notify { 'Update Required':
-      message => "NessusAgent version '${current_version}' is outdated or not installed. Expected version: ${version}.",
-    }
   } else {
-    notify { 'NessusAgent Up-to-Date':
-      message => "NessusAgent version '${current_version}' is up-to-date.",
-    }
+    notify { 'Nessus version fact not found, will catch it on the next run': }
   }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) > 0) {
+  if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Download the package from Tenable API
