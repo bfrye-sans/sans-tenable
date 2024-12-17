@@ -58,11 +58,11 @@ class tenable::agent (
 
   # Populate the Nessus version fact file conditionally
   exec { 'get_nessus_agent_version':
-    command => '/bin/bash -c "if command -v /opt/nessus_agent/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus_agent/sbin/nessuscli -v | sed -n \"s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; else echo \"0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; fi"',
-    unless  => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
-    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    command   => '/bin/bash -c "if command -v /opt/nessus_agent/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus_agent/sbin/nessuscli -v | sed -n \"s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; else echo \"0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; fi"',
+    unless    => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
+    path      => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     logoutput => true,
-    require => File['/opt/puppetlabs/facter/facts.d'],
+    require   => File['/opt/puppetlabs/facter/facts.d'],
   }
 
   # Ensure the fact file has proper permissions
@@ -74,9 +74,10 @@ class tenable::agent (
     require => Exec['get_nessus_agent_version'],
   }
 
-  # Read the current version from the fact file
-#  $current_version = file($file_path)
-
+  if $facts['nessus_version'] {
+    $current_version = $facts['nessus_version']
+  }
+  
   notify { 'NessusAgent Version':
     message => "Current NessusAgent version: ${current_version}",
   }
