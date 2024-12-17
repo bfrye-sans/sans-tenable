@@ -46,7 +46,7 @@ class tenable::agent (
   $arch = $facts['os']['architecture'],
 ) {
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
-  $current_version = undef
+  $current_version = '99.99.99'
 
   # Ensure the facts.d directory exists
   file { '/opt/puppetlabs/facter/facts.d':
