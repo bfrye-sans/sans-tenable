@@ -65,7 +65,7 @@ class tenable::agent (
   }
 
   # Ensure the fact file has proper permissions
-  file { "${file_path}":
+  file { '/opt/puppetlabs/facter/facts.d/nessus_version.txt':
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
@@ -73,7 +73,7 @@ class tenable::agent (
     require => Exec['get_nessus_agent_version'],
   }
 
-  $current_version = file($file_path)
+  $current_version = file(/opt/puppetlabs/facter/facts.d/nessus_version.txt)
 
   if ($current_version == 0) or (versioncmp($current_version, $version) < 0) {
     notify { 'Update Required':
