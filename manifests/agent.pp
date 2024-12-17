@@ -116,7 +116,7 @@ class tenable::agent (
         require => Exec['get_nessus_agent_version'],
       }
     }
-  } elsif $current_version == $version {
+  } elsif versioncmp($current_version, $version) == 0 {
     notify { "Nessus Agent is already at the latest version: ${version}": }
   } else {
     fail('Unsupported OS family.')
