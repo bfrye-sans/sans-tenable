@@ -57,13 +57,13 @@ class tenable::agent (
 
   # Populate the Nessus version fact file conditionally
   exec { 'get_nessus_agent_version':
-    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "0" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
-    unless  => '/usr/bin/test -f /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',  # Run only if the file doesn't exist
+    command => "/opt/nessus_agent/sbin/nessuscli -v | sed -n 's/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p' > ${file_path} || echo "0" > ${file_path}",
+    unless  => "/usr/bin/test -f ${file_path}",  # Run only if the file doesn't exist
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
   }
 
   # Ensure the fact file has proper permissions
-  file { '/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt':
+  file { "${file_path}":
     ensure  => 'file',
     owner   => 'root',
     group   => 'root',
@@ -74,14 +74,14 @@ class tenable::agent (
   $current_version = $facts['nessus_agent_version']
 
   if ($current_version == 0) or (versioncmp($current_version, $version) < 0) {
-  notify { 'Update Required':
-    message => "NessusAgent version '${current_version}' is outdated or not installed. Expected version: ${version}.",
+    notify { 'Update Required':
+      message => "NessusAgent version '${current_version}' is outdated or not installed. Expected version: ${version}.",
+    }
+  } else {
+    notify { 'NessusAgent Up-to-Date':
+      message => "NessusAgent version '${current_version}' is up-to-date.",
+    }
   }
-} else {
-  notify { 'NessusAgent Up-to-Date':
-    message => "NessusAgent version '${current_version}' is up-to-date.",
-  }
-}
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) > 0) {
