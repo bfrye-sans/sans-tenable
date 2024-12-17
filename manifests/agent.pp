@@ -56,18 +56,13 @@ class tenable::agent (
     end
   %>')
 
-  # Explicitly reference the variable to use it in a resource
-  notify { "RPM Package Version":
-    message => "The current installed version of NessusAgent is: ${current_version}",
-  }
-
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture.
       exec { 'download_nessus_agent':
-        command => "/usr/bin/rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
+        command => "/usr/bin/rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-${version}-el${major_release}.${arch}.rpm",
       }
 
       notify { "Nessus Agent version: ${version} installed.": }
@@ -82,22 +77,22 @@ class tenable::agent (
   service { 'nessusagent':
     ensure  => $service_ensure,
     enable  => $service_enable,
-#    require => Package['NessusAgent'],
+    require => Package['NessusAgent'],
   }
 
   # Register agent if it's not already linked
-exec { 'register_nessus_agent':
-  command => sprintf(
-    "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
-    $key,
-    $group,
-    $port,
-    $proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" },
-    $proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" },
-    $host ? { undef => '', default => " --host=${host}" },
-    $cloud ? { undef => '', default => " --cloud" }
-  ),
-  unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "None"',
-#  require => Service['nessusagent'],
-}
+  exec { 'register_nessus_agent':
+    command => sprintf(
+      "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
+      $key,
+      $group,
+      $port,
+      $proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" },
+      $proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" },
+      $host ? { undef => '', default => " --host=${host}" },
+      $cloud ? { undef => '', default => " --cloud" }
+    ),
+    unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "None"',
+    require => Service['nessusagent'],
+  }
 }
