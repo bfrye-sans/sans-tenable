@@ -1,8 +1,9 @@
 # This class installs and configures Tenable SecurityCenter.
 #
-class tenable::security_center: (
+class tenable::security_center (
   String $service_ensure = 'running',
   Boolean $service_enable = true,
+  String $api_key,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
@@ -52,7 +53,7 @@ class tenable::security_center: (
       $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-latest-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/Nessus-${version}-el${major_release}.${arch}.rpm"
       exec { 'download_nessus_security_center':
-        command => "/usr/bin/curl -L -o ${download_path} ${package_source}",
+        command => "/usr/bin/curl -L -o ${download_path} -H 'Authorization: Bearer=${api_key}' ${package_source}",
         creates => $download_path,
       }
 
