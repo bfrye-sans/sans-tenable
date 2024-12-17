@@ -5,7 +5,7 @@ class tenable::security_center: (
   Boolean $service_enable = true,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
-) {}
+) {
   $file_path = '/opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt'
 
   # Ensure the facts.d directory exists
@@ -87,3 +87,6 @@ class tenable::security_center: (
         enable  => $service_enable,
         require => Package['nessusd'],
       }
+    }
+  }
+}
