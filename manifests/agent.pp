@@ -81,7 +81,7 @@ class tenable::agent (
     command => "bash -c 'if [ \"$(cat ${current_version})\" = \"Not Installed\" ] || [ \"$(cat ${current_version})\" \< \"${version}\" ]; then echo \"Update Required\"; else echo \"Up-to-date\"; fi'",
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     logoutput => true,  # Log the comparison result for visibility
-    require  => Exec['get_nessus_agent_version'],
+    require  => Exec['check_nessus_installed'],
   }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
