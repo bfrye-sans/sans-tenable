@@ -46,7 +46,7 @@ class tenable::agent (
   $arch = $facts['os']['architecture'],
 ) {
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
-  $current_version = '0.0.0'
+  $current_version = undef
 
   # Ensure the facts.d directory exists
   file { '/opt/puppetlabs/facter/facts.d':
@@ -82,7 +82,7 @@ class tenable::agent (
     message => "Current NessusAgent version: ${current_version}",
   }
 
-  if ($current_version == 0) or (versioncmp($current_version, $version) < 0) {
+  if ($current_version == '0.0.0') or (versioncmp($current_version, $version) < 0) {
     notify { 'Update Required':
       message => "NessusAgent version '${current_version}' is outdated or not installed. Expected version: ${version}.",
     }
