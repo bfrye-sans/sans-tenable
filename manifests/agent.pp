@@ -74,10 +74,11 @@ class tenable::agent (
   }
 
   if $facts['nessus_version'] {
+    # Assign the current version of the Nessus agent to a variable so we can determine if it's eligible for upgrade
     $current_version = $facts['nessus_version']
   } else {
-    $current_version = '99.99.99'
-    notify { 'Nessus version fact not found, will catch it on the next run': }
+    # No version fact found, so we'll assume it's not installed
+    $current_version = '0.0.0'
   }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
