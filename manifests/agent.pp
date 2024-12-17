@@ -45,25 +45,7 @@ class tenable::agent (
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
-  # Define paths
-  $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $current_version     = '/tmp/nessus_version_output.txt'
-
-  # Ensure the facts.d directory exists on the agent
-  file { '/opt/puppetlabs/facter/facts.d':
-    ensure => 'directory',
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0755',
-  }
-
-  # Generate the version file dynamically
-  exec { 'get_nessus_agent_version':
-    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt || echo "Not Installed" > /opt/puppetlabs/facter/facts.d/nessus_version.txt',
-    creates => $file_path,
-    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-    require => File['/opt/puppetlabs/facter/facts.d'],
-  }
 
   # Copy the version file to a temporary file for reading
   exec { 'read_nessus_version':
@@ -123,6 +105,27 @@ class tenable::agent (
         message => "Nessus Agent version: ${version} installed successfully and cleaned up.",
         require => Exec['cleanup_nessus_agent'],
       }
+
+      $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
+
+      # create external fact for Nessus Agent version
+      file { '/opt/puppetlabs/facter/facts.d/nessus_agent_version.txt':
+        ensure  => file,
+        content => $version,
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0644',
+      }
+
+      # Generate the version file dynamically after installation/upgrade
+      exec { 'get_nessus_agent_version':
+        command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt || echo "Not Installed" > /opt/puppetlabs/facter/facts.d/nessus_version.txt',
+        creates => $file_path,
+        path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+        require => File['/opt/puppetlabs/facter/facts.d'],
+      }
+
+
     }
   } elsif $current_version == $version {
     notify { "Nessus Agent is already at the latest version: ${version}": }
