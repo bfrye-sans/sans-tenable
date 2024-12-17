@@ -71,7 +71,7 @@ class tenable::agent (
     require => Exec['get_nessus_agent_version'],
   }
 
-  $current_version = $facts['nessus_agent_version']
+  $current_version = file($file_path)
 
   if ($current_version == 0) or (versioncmp($current_version, $version) < 0) {
     notify { 'Update Required':
