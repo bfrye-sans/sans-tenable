@@ -70,7 +70,7 @@ class tenable::agent (
         command => "rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
       }
 
-      notify { "Nessus Agent version: ${newest_version} installed.": }
+      notify { "Nessus Agent version: ${version} installed.": }
       }
   } elsif $current_version == $version {
     notify { "Nessus Agent is already at the latest version: ${version}": }
