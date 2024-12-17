@@ -65,10 +65,16 @@ class tenable::agent (
     mode    => '0644',
   }
 
-  exec { 'get_nessus_agent_version':
-    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "Not Installed" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
-    creates => $file_path,  # Ensures this runs only if the file does not exist
+  exec { 'check_nessuscli_exists':
+    command => "test -x /opt/nessus_agent/sbin/nessuscli || echo "Not Installed" > ${file_path}",
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    creates => $file_path,
+  }
+  # Check if Nessus Agent is installed before attempting to get its version
+  exec { 'check_nessus_installed':
+    command => "grep -q 'Not Installed' ${file_path} || /opt/nessus_agent/sbin/nessuscli -v | sed -n 's/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p' > ${current_version}",
+    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    require => File[$file_path],
   }
 
   exec { 'compare_nessus_version':
