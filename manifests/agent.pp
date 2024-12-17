@@ -48,14 +48,22 @@ class tenable::agent (
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $current_version     = '/tmp/nessus_version_output.txt'
 
-  # Grab the current version of the Nessus agent.
-  if !file_exists($current_version) {
-    exec { 'initialize_nessus_version':
-      command => "echo 'Not Installed' > ${current_version}",
+  # check /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt and if it doesn't exist, find current nessus version and write it to that file
+  if !file_exists('/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt') {
+    exec { 'get_nessus_agent_version':
+      command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "Not Installed" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
       path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-      creates => $current_version,
+    }
+  } else {
+    file { '/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt':
+      ensure  => file,
+      content => 'Not Installed',
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
     }
   }
+
   exec { 'compare_nessus_version':
     command => "bash -c 'if [ \"$(cat ${current_version})\" = \"Not Installed\" ] || [ \"$(cat ${current_version})\" \< \"${version}\" ]; then echo \"Update Required\"; else echo \"Up-to-date\"; fi'",
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
