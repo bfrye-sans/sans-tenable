@@ -49,7 +49,7 @@ class tenable::agent (
   $current_version     = '/tmp/nessus_version_output.txt'
 
   # Ensure the facts.d directory exists
-  file { '/opt/nessus_agent/facter/facts.d':
+  file { '/opt/puppetlabs/facter/facts.d':
     ensure => 'directory',
     owner  => 'root',
     group  => 'root',
