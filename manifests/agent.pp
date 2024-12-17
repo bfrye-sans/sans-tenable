@@ -37,43 +37,56 @@ class tenable::agent (
   String $service_ensure = 'running',
   Boolean $service_enable = true,
   Integer $port = 8834,
-  Optional[String] $proxy_host,
-  Optional[Integer] $proxy_port,
+  Optional[Variant[String, Undef]] $proxy_host = undef,
+  Optional[Variant[Integer, Undef]] $proxy_port = undef,
   Optional[String] $host = undef,
   Optional[Boolean] $cloud = false,
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
-  # create an external fact for current_version
-  $file_path = '/opt/puppetlabs/facter/facts.d/nessus_agent_version.txt'
+  # Define paths
+  $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
+  $temp_output     = '/tmp/nessus_version_output.txt'
 
-  # ensure the directory exists
-  file { '/etc/puppetlabs/facter/facts.d':
+  # Ensure the facts.d directory exists on the agent
+  file { '/opt/puppetlabs/facter/facts.d':
     ensure => 'directory',
-    owner => 'root',
-    group => 'root',
-    mode => '0755',
+    owner  => 'root',
+    group  => 'root',
+    mode   => '0755',
   }
 
-  # Generate the external fact with the current version of the Nessus agent
+  # Generate the version file dynamically
   exec { 'get_nessus_agent_version':
-    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_version=\\1/p" > /etc/puppetlabs/facter/facts.d/nessus_version.txt || echo "nessus_version=Not Installed" > /etc/puppetlabs/facter/facts.d/nessus_version.txt',
+    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt || echo "Not Installed" > /opt/puppetlabs/facter/facts.d/nessus_version.txt',
     creates => $file_path,
-    path => '/usr/bin:/bin,/sbin:/usr/sbin',
+    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     require => File['/opt/puppetlabs/facter/facts.d'],
   }
 
-  # Assign the current version to a variable
-  $current_version = $facts['nessus_agent_version']
-
-  # Set permissions on the external fact
-  file { $file_path:
-    ensure => 'file',
-    owner => 'root',
-    group => 'root',
-    mode => '0644',
+  # Copy the version file to a temporary file for reading
+  exec { 'read_nessus_version':
+    command => "cat ${file_path} > ${current_version}",
+    creates => $current_version,
+    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     require => Exec['get_nessus_agent_version'],
+  }
+
+  # Use the output file's content directly in the comparison
+  exec { 'compare_nessus_version':
+    command => "bash -c 'if [ \"$(cat ${current_version})\" = \"Not Installed\" ] || [ \"$(cat ${current_version})\" \< \"${version}\" ]; then echo \"Update Required\"; else echo \"Up-to-date\"; fi'",
+    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    logoutput => true,  # Log the comparison result for visibility
+    require  => Exec['read_nessus_version'],
+  }
+
+  # Clean up temporary file after processing
+  exec { 'cleanup_nessus_temp_output':
+    command => "rm -f ${current_version}",
+    onlyif  => "test -f ${current_version}",
+    require => Exec['compare_nessus_version'],
+    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
   }
 
   # Notify the user of the current version
