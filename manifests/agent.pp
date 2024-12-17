@@ -47,20 +47,19 @@ class tenable::agent (
 ) {
   $current_version = inline_template('<%=
     begin
-      # Run nessuscli to get the version
+      # Run the nessuscli command and strip output
       output = %x{/opt/nessus_agent/sbin/nessuscli -v 2>/dev/null}.strip
 
-      # Match version in format x.y.z using regex
-      if output =~ /NessusAgent\s+(\d+\.\d+\.\d+)/
-        $1 # Return the captured version number
+      # Match version after "(Nessus Agent)" and capture it
+      if output =~ /Nessus Agent\)\s+([\d.]+)/
+        $1 # Return the captured version
       else
-        "Not Installed" # Fallback if no version is found
+        "Not Installed" # Fallback if no match
       end
     rescue
-      "Not Installed" # Fallback if the command fails
+      "Not Installed" # Fallback on command failure
     end
   %>')
-
   # Display the output for verification
   notify { 'Nessus Agent Version':
     message => "The current version of NessusAgent is: ${current_version}",
@@ -71,7 +70,6 @@ class tenable::agent (
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Download the package from Tenable API
-      notify { "debug nessus: Version: ${version} Current Version: ${current_version}": }
       $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/files/NessusAgent-latest-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       exec { 'download_nessus_agent':
