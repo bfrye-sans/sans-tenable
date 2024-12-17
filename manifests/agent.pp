@@ -75,7 +75,7 @@ class tenable::agent (
   }
 
   # Read the current version from the fact file
-  $current_version = file($file_path)
+#  $current_version = file($file_path)
 
   notify { 'NessusAgent Version':
     message => "Current NessusAgent version: ${current_version}",
