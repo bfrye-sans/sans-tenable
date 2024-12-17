@@ -57,10 +57,10 @@ class tenable::agent (
 
   # Populate the Nessus version fact file conditionally
   exec { 'get_nessus_agent_version':
-    command => 'if command -v /opt/nessus_agent/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; else echo "0.0.0" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; fi',
+    command => '/bin/bash -c "if command -v /opt/nessus_agent/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus_agent/sbin/nessuscli -v | sed -n \"s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; else echo \"0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; fi"',
     unless  => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-    logoutput => true,  # Logs the output for debugging
+    logoutput => true,
   }
 
   # Ensure the fact file has proper permissions
