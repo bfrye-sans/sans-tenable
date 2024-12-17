@@ -93,7 +93,7 @@ class tenable::agent (
   service { 'nessusagent':
     ensure  => $service_ensure,
     enable  => $service_enable,
-    require => Package['NessusAgent'],
+#    require => Package['NessusAgent'],
   }
 
   # Register agent if it's not already linked
