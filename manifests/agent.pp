@@ -116,30 +116,30 @@ class tenable::agent (
         require => Exec['get_nessus_agent_version'],
       }
 
-        # Configure agent
-  service { 'nessusagent':
-    ensure  => $service_ensure,
-    enable  => $service_enable,
-    require => Package['NessusAgent'],
-  }
+      # Configure agent
+      service { 'nessusagent':
+        ensure  => $service_ensure,
+        enable  => $service_enable,
+        require => Package['NessusAgent'],
+      }
 
-  # Register agent if it's not already linked
-  exec { 'register_nessus_agent':
-    command => sprintf(
-      "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
-      $key,
-      $group,
-      $port,
-      $proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" },
-      $proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" },
-      $host ? { undef => '', default => " --host=${host}" },
-      $cloud ? { undef => '', default => " --cloud" }
-    ),
-    unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "Link status: Connected"',
-    require => Service['nessusagent'],
-  }
+      # Register agent if it's not already linked
+      exec { 'register_nessus_agent':
+        command => sprintf(
+          "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
+          $key,
+          $group,
+          $port,
+          $proxy_host ? { undef => '', default => " --proxy-host=${proxy_host}" },
+          $proxy_port ? { undef => '', default => " --proxy-port=${proxy_port}" },
+          $host ? { undef => '', default => " --host=${host}" },
+          $cloud ? { undef => '', default => " --cloud" }
+        ),
+        unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "Link status: Connected"',
+        require => Service['nessusagent'],
+      }
     }
-  } elsif {
+  } else {
     notify { "Nessus Agent is already at the latest version: ${version}": }
   }
 }
