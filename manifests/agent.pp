@@ -74,14 +74,14 @@ class tenable::agent (
   }
 
   # Configure agent
-  service { 'nessusagent':
+  -> service { 'nessusagent':
     ensure  => $service_ensure,
     enable  => $service_enable,
     require => Package['NessusAgent'],
   }
 
   # Register agent if it's not already linked
-  exec { 'register_nessus_agent':
+  -> exec { 'register_nessus_agent':
     command => sprintf(
       "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
       $key,
