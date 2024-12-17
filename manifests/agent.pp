@@ -77,6 +77,7 @@ class tenable::agent (
   if $facts['nessus_version'] {
     $current_version = $facts['nessus_version']
   } else {
+    $current_version = '99.99.99'
     notify { 'Nessus version fact not found, will catch it on the next run': }
   }
 
