@@ -45,6 +45,7 @@ class tenable::agent (
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
+  $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $current_version     = '/tmp/nessus_version_output.txt'
 
   # Copy the version file to a temporary file for reading
@@ -105,8 +106,6 @@ class tenable::agent (
         message => "Nessus Agent version: ${version} installed successfully and cleaned up.",
         require => Exec['cleanup_nessus_agent'],
       }
-
-      $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
 
       # create external fact for Nessus Agent version
       file { '/opt/puppetlabs/facter/facts.d/nessus_agent_version.txt':
