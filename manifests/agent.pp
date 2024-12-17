@@ -60,7 +60,7 @@ class tenable::agent (
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
-      # Download the package
+      # Download the package from Tenable API
       $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/files/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       exec { 'download_nessus_agent':
@@ -68,6 +68,7 @@ class tenable::agent (
         creates => $download_path,
       }
 
+      # Install the package
       Package { 'NessusAgent':
         ensure   => 'installed',
         source   => $download_path,
@@ -75,8 +76,18 @@ class tenable::agent (
         require  => Exec['download_nessus_agent'],
       }
 
-      notify { "Nessus Agent version: ${version} installed.": }
+      # Clean up the downloaded package
+      exec { 'cleanup_nessus_agent':
+        command => "/bin/rm -f ${download_path}",
+        onlyif => "/usr/bin/test -f ${download_path}",
+        require => Package['NessusAgent'],
       }
+
+      notify { "Nessus Agent version: ${version} installed successfully": 
+        message => "Nessus Agent version: ${version} installed successfully and cleaned up.",
+        require => Exec['cleanup_nessus_agent'],
+      }
+    }
   } elsif $current_version == $version {
     notify { "Nessus Agent is already at the latest version: ${version}": }
   } else {
@@ -84,14 +95,14 @@ class tenable::agent (
   }
 
   # Configure agent
-  -> service { 'nessusagent':
+  service { 'nessusagent':
     ensure  => $service_ensure,
     enable  => $service_enable,
     require => Package['NessusAgent'],
   }
 
   # Register agent if it's not already linked
-  -> exec { 'register_nessus_agent':
+  exec { 'register_nessus_agent':
     command => sprintf(
       "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
       $key,
