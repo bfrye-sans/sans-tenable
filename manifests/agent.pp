@@ -68,6 +68,9 @@ class tenable::agent (
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $newest_version) < 0 {
+    notify { "Nessus Agent Update Available":
+      message => "An update is available for the Nessus Agent. Current version: ${current_version}, Newest version: ${newest_version}",
+    }
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture.
