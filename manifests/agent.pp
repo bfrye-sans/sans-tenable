@@ -71,15 +71,6 @@ class tenable::agent (
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
   }
 
-  # Ensure the fact file exists with appropriate permissions
-  file { $file_path:
-    ensure  => 'file',
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0644',
-    require => Exec['get_nessus_agent_version'],
-  }
-
   exec { 'compare_nessus_version':
     command => "bash -c 'if [ \"$(cat ${current_version})\" = \"Not Installed\" ] || [ \"$(cat ${current_version})\" \< \"${version}\" ]; then echo \"Update Required\"; else echo \"Up-to-date\"; fi'",
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
@@ -122,14 +113,6 @@ class tenable::agent (
         require => File['/opt/puppetlabs/facter/facts.d'],
       }
 
-      # Copy the version file to a temporary file for reading
-      exec { 'read_nessus_version':
-        command => "cat ${file_path} > ${current_version}",
-        creates => $current_version,
-        path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-        require => Exec['get_nessus_agent_version'],
-      }
-
       # Configure agent
       service { 'nessusagent':
         ensure  => $service_ensure,
@@ -150,6 +133,7 @@ class tenable::agent (
           $cloud ? { undef => '', default => " --cloud" }
         ),
         unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "Link status: Connected"',
+        creates => '/opt/nessus_agent/var/nessus/agent.db',  # Ensures this runs only if the agent is not already registered
         require => Service['nessusagent'],
       }
     }
