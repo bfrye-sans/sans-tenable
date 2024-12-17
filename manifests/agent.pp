@@ -45,7 +45,7 @@ class tenable::agent (
 ) {
 
   # Use inline_template to fetch the version or fallback to default
-  String $current_version = inline_template('<%=
+  $current_version = inline_template('<%=
     begin
       output = %x[/usr/bin/rpm -q NessusAgent 2>/dev/null | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'].strip
       output.empty? ? "Not Installed" : output
@@ -54,10 +54,11 @@ class tenable::agent (
     end
   %>')
 
-  # Notify the result
+  # Explicitly reference the variable to use it in a resource
   notify { "RPM Package Version":
     message => "The current installed version of NessusAgent is: ${current_version}",
   }
+
 
   # Find out the newest version of the Nessus agent.
 #  String $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus-agents | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip.empty? ? "default_value" %x[Not Installed].strip %>')
