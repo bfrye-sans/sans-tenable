@@ -32,6 +32,7 @@
 class tenable::scanner (
   String $service_ensure = 'running',
   Boolean $service_enable = true,
+  String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {

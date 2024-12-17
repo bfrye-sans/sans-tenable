@@ -5,6 +5,7 @@ class tenable::security_center (
   Boolean $service_enable = true,
   String $api_key,
   String $license_key,
+  String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
