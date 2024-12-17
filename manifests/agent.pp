@@ -52,34 +52,28 @@ exec { 'get_nessus_version':
   path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
 }
 
-# Use a fallback if the file doesn't exist or is empty
+# Use a fallback value if the file doesn't exist or is empty
 exec { 'set_default_version_if_missing':
   command => 'echo "Not Installed" > /tmp/nessus_version',
-  onlyif  => 'test ! -s /tmp/nessus_version', # Only if file is empty or missing
+  onlyif  => 'test ! -s /tmp/nessus_version', # Runs only if the file is empty or missing
   require => Exec['get_nessus_version'],
+  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
 }
 
-# Capture the version content into a fact file for Puppet to process
+# Capture the version dynamically using an exec
 exec { 'capture_nessus_version':
-  command => '/bin/cat /tmp/nessus_version > /tmp/nessus_version_fact',
-  creates => '/tmp/nessus_version_fact',
-  require => Exec['set_default_version_if_missing'],
+  command => '/bin/cat /tmp/nessus_version',
+  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+  logoutput => true, # Outputs the result in the Puppet logs
+  require  => Exec['set_default_version_if_missing'],
 }
 
-# Use a variable to read the captured fact
-$current_version = file('/tmp/nessus_version_fact')
-
-# Clean up the temporary files
-exec { 'cleanup_nessus_files':
-  command => 'rm -f /tmp/nessus_version /tmp/nessus_version_fact',
-  onlyif  => 'test -f /tmp/nessus_version || test -f /tmp/nessus_version_fact',
+# Clean up the temporary file
+exec { 'cleanup_nessus_version_file':
+  command => 'rm -f /tmp/nessus_version',
+  onlyif  => 'test -f /tmp/nessus_version',
   require => Exec['capture_nessus_version'],
-}
-
-# Output the version
-notify { 'NessusAgent Version':
-  message => "The current version of NessusAgent is: ${current_version}",
-  require => Exec['cleanup_nessus_files'],
+  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
 }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
