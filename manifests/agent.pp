@@ -52,17 +52,24 @@ exec { 'get_nessus_version':
   path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
 }
 
-# Define a default version if the temporary file doesn't exist
-$current_version = file('/tmp/nessus_version', default => 'Not Installed')
+# Use a fallback if the file doesn't exist or is empty
+exec { 'set_default_version_if_missing':
+  command => 'echo "Not Installed" > /tmp/nessus_version',
+  onlyif  => 'test ! -s /tmp/nessus_version', # Only if file is empty or missing
+  require => Exec['get_nessus_version'],
+}
 
-# Clean up the temporary file after processing
+# Read the version from the file
+$current_version = inline_template('<%= File.read("/tmp/nessus_version").strip %>')
+
+# Clean up the temporary file
 exec { 'cleanup_nessus_version_file':
   command => 'rm -f /tmp/nessus_version',
   onlyif  => 'test -f /tmp/nessus_version',
-  require => [Exec['get_nessus_version']],
+  require => Exec['set_default_version_if_missing'],
 }
 
-# Output the captured version using a notify resource
+# Output the version
 notify { 'NessusAgent Version':
   message => "The current version of NessusAgent is: ${current_version}",
   require => Exec['cleanup_nessus_version_file'],
