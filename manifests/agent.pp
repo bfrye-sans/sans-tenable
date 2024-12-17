@@ -64,7 +64,7 @@ class tenable::agent (
     group   => 'root',
     mode    => '0644',
   }
-  
+
   exec { 'get_nessus_agent_version':
     command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "Not Installed" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
     creates => $file_path,  # Ensures this runs only if the file does not exist
@@ -112,23 +112,6 @@ class tenable::agent (
         command => "/bin/rm -f ${download_path}",
         onlyif => "/usr/bin/test -f ${download_path}",
         require => Package['NessusAgent'],
-      }
-
-      # Ensure the facts.d directory exists on the agent
-      file { '/opt/puppetlabs/facter/facts.d':
-        ensure => 'directory',
-        owner  => 'root',
-        group  => 'root',
-        mode   => '0755',
-      }
-
-      # create external fact for Nessus Agent version
-      file { '/opt/puppetlabs/facter/facts.d/nessus_agent_version.txt':
-        ensure  => file,
-        content => $version,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
       }
 
       # Generate the version file dynamically after installation/upgrade
