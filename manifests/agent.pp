@@ -67,7 +67,7 @@ class tenable::agent (
   }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if versioncmp($current_version, $newest_version) < 0 {
+  if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
     notify { "Nessus Agent Update Available":
       message => "An update is available for the Nessus Agent. Current version: ${current_version}, Newest version: ${newest_version}",
     }
