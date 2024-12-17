@@ -46,7 +46,6 @@ class tenable::agent (
   $arch = $facts['os']['architecture'],
 ) {
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
-  $tmp_file        = '/tmp/nessus_version_tmp.txt'
 
   # Ensure the facts.d directory exists
   file { '/opt/nessus_agent/facter/facts.d':
@@ -73,13 +72,7 @@ class tenable::agent (
     require => Exec['get_nessus_agent_version'],
   }
 
-  # If the fact doesn't exist, create a temporary version so we can read it on the first run
-  exec { 'read_nessus_version':
-    command => "cat ${file_path} > ${tmp_file}",
-    creates => $file_path,
-    require => File['/opt/puppetlabs/facter/facts.d'],
-  }
-  $current_version = file($tmp_file)
+  $current_version = file($file_path)
 
   if ($current_version == 0) or (versioncmp($current_version, $version) < 0) {
     notify { 'Update Required':
