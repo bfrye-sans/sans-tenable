@@ -48,7 +48,7 @@ class tenable::agent (
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $current_version     = '/tmp/nessus_version_output.txt'
 
-  # Use the output file's content directly in the comparison
+  # Grab the current version of the Nessus agent.
   if !file_exists($current_version) {
     exec { 'initialize_nessus_version':
       command => "echo 'Not Installed' > ${current_version}",
@@ -130,7 +130,7 @@ class tenable::agent (
         require => Package['NessusAgent'],
       }
 
-      # Register agent if it's not already linked
+      # Register agent if it's not already linked - only run this one time on registration
       exec { 'register_nessus_agent':
         command => sprintf(
           "/opt/nessus_agent/sbin/nessuscli agent link --key=%s --groups=%s --port=%s%s%s%s%s",
