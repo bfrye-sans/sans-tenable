@@ -41,7 +41,7 @@ class tenable::agent (
   Optional[Integer] $proxy_port,
   Optional[String] $host = undef,
   Optional[Boolean] $cloud = false,
-  String $version = 'latest',
+  String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
@@ -60,13 +60,21 @@ class tenable::agent (
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
-      # Grab the major release and architecture.
-      $package_source = "/usr/bin/rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-${version}-el${major_release}.${arch}.rpm"
+      # Download the package
+      $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-${version}-el${major_release}.${arch}.rpm"
+      $download_path = "/tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm"
+      exec { 'download_nessus_agent':
+        command => "/usr/bin/curl -o /tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm ${package_source}",
+        creates => $download_path,
+      }
+
       Package { 'NessusAgent':
         ensure   => $version,
-        source   => $package_source,
+        source   => $download_path,
         provider => 'rpm',
+        require  => Exec['download_nessus_agent'],
       }
+      
       notify { "Nessus Agent version: ${version} installed.": }
       }
   } elsif $current_version == $version {
