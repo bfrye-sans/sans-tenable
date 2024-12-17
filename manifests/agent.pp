@@ -113,7 +113,7 @@ class tenable::agent (
       $host ? { undef => '', default => " --host=${host}" },
       $cloud ? { undef => '', default => " --cloud" }
     ),
-    unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "None"',
+    unless  => '/opt/nessus_agent/sbin/nessuscli agent status | grep -q "Link status: Connected"',
     require => Service['nessusagent'],
   }
 }
