@@ -39,6 +39,7 @@ class tenable::security_center (
   if $facts['nessus_security_center_version'] {
     # Assign the current version of the Nessus security center to a variable so we can determine if it's eligible for upgrade
     $current_version = $facts['nessus_security_center_version']
+    $backup = true
   } else {
     # No version fact found, so we'll assume it's not installed
     $current_version = '0.0.0'
@@ -69,8 +70,25 @@ class tenable::security_center (
         creates => $download_path,
       }
 
+      # openjdk 1.8 is a dependency, so lets get that installed
+      package { 'java-1.8.0-openjdk':
+        ensure => 'installed',
+      }
+
+      # true backup means we're upgrading, so stop the service and backup the current configuration
+      if $backup == true {
+        service { 'SecurityCenter':
+          ensure => 'stopped',
+        }
+        # Backup the current configuration
+        exec { 'backup_nessus_security_center':
+          command => "tar -pzcf /opt/sc/backup/sc_backup_$(date +%Y%m%d).tar /opt/sc",
+          onlyif => '/usr/bin/test -d /opt/sc',
+        }
+      }
+      
       # Install the package
-      Package { 'nessusd':
+      Package { 'SecurityCenter':
         ensure   => 'installed',
         source   => $download_path,
         provider => 'rpm',
@@ -81,7 +99,7 @@ class tenable::security_center (
       exec { 'cleanup_nessus_security_center':
         command => "/bin/rm -f ${download_path}",
         onlyif => "/usr/bin/test -f ${download_path}",
-        require => Package['nessusd'],
+        require => Package['SecurityCenter'],
       }
 
       # Generate the version file dynamically after installation/upgrade
@@ -92,13 +110,13 @@ class tenable::security_center (
       }
 
       # Notify the exec resource after package installation/upgrade
-      Package['nessusd'] -> Exec['reset_nessus_security_center_version']
+      Package['SecurityCenter'] -> Exec['reset_nessus_security_center_version']
 
       # Configure agent
-      service { 'nessusd':
+      service { 'SecurityCenter':
         ensure  => $service_ensure,
         enable  => $service_enable,
-        require => Package['nessusd'],
+        require => Package['SecurityCenter'],
       }
     }
   }
