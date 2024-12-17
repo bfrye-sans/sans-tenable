@@ -48,14 +48,6 @@ class tenable::agent (
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $current_version     = '/tmp/nessus_version_output.txt'
 
-  # Copy the version file to a temporary file for reading
-  exec { 'read_nessus_version':
-    command => "cat ${file_path} > ${current_version}",
-    creates => $current_version,
-    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-    require => Exec['get_nessus_agent_version'],
-  }
-
   # Use the output file's content directly in the comparison
   exec { 'compare_nessus_version':
     command => "bash -c 'if [ \"$(cat ${current_version})\" = \"Not Installed\" ] || [ \"$(cat ${current_version})\" \< \"${version}\" ]; then echo \"Update Required\"; else echo \"Up-to-date\"; fi'",
@@ -64,19 +56,8 @@ class tenable::agent (
     require  => Exec['read_nessus_version'],
   }
 
-  # Clean up temporary file after processing
-  exec { 'cleanup_nessus_temp_output':
-    command => "rm -f ${current_version}",
-    onlyif  => "test -f ${current_version}",
-    require => Exec['compare_nessus_version'],
-    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-  }
-
-  # Notify the user of the current version
-  notify { "Current Nessus Agent version: ${current_version}": }
-
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
+  if ($current_version == 'Not Installed') or (versioncmp($current_version, $desired_version) < 0) {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Download the package from Tenable API
@@ -100,11 +81,6 @@ class tenable::agent (
         command => "/bin/rm -f ${download_path}",
         onlyif => "/usr/bin/test -f ${download_path}",
         require => Package['NessusAgent'],
-      }
-
-      notify { "Nessus Agent version: ${version} installed successfully": 
-        message => "Nessus Agent version: ${version} installed successfully and cleaned up.",
-        require => Exec['cleanup_nessus_agent'],
       }
 
       # Ensure the facts.d directory exists on the agent
@@ -132,7 +108,13 @@ class tenable::agent (
         require => File['/opt/puppetlabs/facter/facts.d'],
       }
 
-
+      # Copy the version file to a temporary file for reading
+      exec { 'read_nessus_version':
+        command => "cat ${file_path} > ${current_version}",
+        creates => $current_version,
+        path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+        require => Exec['get_nessus_agent_version'],
+      }
     }
   } elsif $current_version == $version {
     notify { "Nessus Agent is already at the latest version: ${version}": }
