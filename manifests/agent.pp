@@ -107,6 +107,14 @@ class tenable::agent (
         require => Exec['cleanup_nessus_agent'],
       }
 
+      # Ensure the facts.d directory exists on the agent
+      file { '/opt/puppetlabs/facter/facts.d':
+        ensure => 'directory',
+        owner  => 'root',
+        group  => 'root',
+        mode   => '0755',
+      }
+
       # create external fact for Nessus Agent version
       file { '/opt/puppetlabs/facter/facts.d/nessus_agent_version.txt':
         ensure  => file,
