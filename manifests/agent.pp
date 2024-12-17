@@ -57,6 +57,14 @@ class tenable::agent (
   }
 
   # Populate the Nessus version fact file only if it doesn't exist
+  file { $file_path:
+    ensure  => 'file',
+    content => 'Not Installed',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+  }
+  
   exec { 'get_nessus_agent_version':
     command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "Not Installed" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
     creates => $file_path,  # Ensures this runs only if the file does not exist
