@@ -48,7 +48,7 @@ class tenable::agent (
 # Run nessuscli -v and capture the version into a temporary file
 exec { 'get_nessus_version':
   command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /tmp/nessus_version 2>/dev/null',
-  creates => '/tmp/nessus_version', # Only run if the file doesn't exist
+  creates => '/tmp/nessus_version',
   path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
 }
 
@@ -59,20 +59,27 @@ exec { 'set_default_version_if_missing':
   require => Exec['get_nessus_version'],
 }
 
-# Read the version from the file
-$current_version = inline_template('<%= File.read("/tmp/nessus_version").strip %>')
-
-# Clean up the temporary file
-exec { 'cleanup_nessus_version_file':
-  command => 'rm -f /tmp/nessus_version',
-  onlyif  => 'test -f /tmp/nessus_version',
+# Capture the version content into a fact file for Puppet to process
+exec { 'capture_nessus_version':
+  command => '/bin/cat /tmp/nessus_version > /tmp/nessus_version_fact',
+  creates => '/tmp/nessus_version_fact',
   require => Exec['set_default_version_if_missing'],
+}
+
+# Use a variable to read the captured fact
+$current_version = file('/tmp/nessus_version_fact')
+
+# Clean up the temporary files
+exec { 'cleanup_nessus_files':
+  command => 'rm -f /tmp/nessus_version /tmp/nessus_version_fact',
+  onlyif  => 'test -f /tmp/nessus_version || test -f /tmp/nessus_version_fact',
+  require => Exec['capture_nessus_version'],
 }
 
 # Output the version
 notify { 'NessusAgent Version':
   message => "The current version of NessusAgent is: ${current_version}",
-  require => Exec['cleanup_nessus_version_file'],
+  require => Exec['cleanup_nessus_files'],
 }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
