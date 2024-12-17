@@ -27,8 +27,6 @@
 #     port                 => 8834,
 #     key                  => 'your-activation-key',
 #     group                => 'your-group',
-#
-#     manage_agent_updates => true,
 #   }
 
 class tenable::agent (
@@ -142,7 +140,5 @@ class tenable::agent (
         require => Service['nessusagent'],
       }
     }
-  } else {
-    notify { "Nessus Agent is already at the latest version: ${version}": }
   }
 }
