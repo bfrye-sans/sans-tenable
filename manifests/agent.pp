@@ -45,36 +45,39 @@ class tenable::agent (
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
-# Run nessuscli -v and capture the version into a temporary file
-exec { 'get_nessus_version':
-  command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /tmp/nessus_version 2>/dev/null',
-  creates => '/tmp/nessus_version',
-  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-}
+  # create an external fact for current_version
+  $file_path = '/opt/puppetlabs/facter/facts.d/nessus_agent_version.txt'
 
-# Use a fallback value if the file doesn't exist or is empty
-exec { 'set_default_version_if_missing':
-  command => 'echo "Not Installed" > /tmp/nessus_version',
-  onlyif  => 'test ! -s /tmp/nessus_version', # Runs only if the file is empty or missing
-  require => Exec['get_nessus_version'],
-  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-}
+  # ensure the directory exists
+  file { '/etc/puppetlabs/facter/facts.d':
+    ensure => 'directory',
+    owner => 'root',
+    group => 'root',
+    mode => '0755',
+  }
 
-# Capture the version dynamically using an exec
-exec { 'capture_nessus_version':
-  command => '/bin/cat /tmp/nessus_version',
-  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-  logoutput => true, # Outputs the result in the Puppet logs
-  require  => Exec['set_default_version_if_missing'],
-}
+  # Generate the external fact with the current version of the Nessus agent
+  exec { 'get_nessus_agent_version':
+    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_version=\\1/p" > /etc/puppetlabs/facter/facts.d/nessus_version.txt || echo "nessus_version=Not Installed" > /etc/puppetlabs/facter/facts.d/nessus_version.txt',
+    creates => $file_path,
+    path => '/usr/bin:/bin,/sbin:/usr/sbin',
+    require => File['/opt/puppetlabs/facter/facts.d'],
+  }
 
-# Clean up the temporary file
-exec { 'cleanup_nessus_version_file':
-  command => 'rm -f /tmp/nessus_version',
-  onlyif  => 'test -f /tmp/nessus_version',
-  require => Exec['capture_nessus_version'],
-  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-}
+  # Assign the current version to a variable
+  $current_version = $facts['nessus_agent_version']
+
+  # Set permissions on the external fact
+  file { $file_path:
+    ensure => 'file',
+    owner => 'root',
+    group => 'root',
+    mode => '0644',
+    require => Exec['get_nessus_agent_version'],
+  }
+
+  # Notify the user of the current version
+  notify { "Current Nessus Agent version: ${current_version}": }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
