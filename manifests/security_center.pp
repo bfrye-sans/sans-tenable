@@ -4,6 +4,7 @@ class tenable::security_center (
   String $service_ensure = 'running',
   Boolean $service_enable = true,
   String $api_key,
+  String $license_key,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
@@ -43,6 +44,17 @@ class tenable::security_center (
     $current_version = '0.0.0'
   }
 
+  # Lets handle the license key in /opt/sc/daemons
+  file { '/opt/sc/daemons/license.key':
+    ensure  => 'file',
+    content => $license_key,
+    owner   => 'tns',
+    group   => 'tns',
+    mode    -> '0600',
+  }
+
+  # restart the service if the license key changes
+  File['/opt/sc/daemons/license.key'] -> Service['nessusd']
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) < 0) {
