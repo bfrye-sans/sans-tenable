@@ -45,29 +45,28 @@ class tenable::agent (
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
-  # Run nessuscli -v and capture the output into a file
-  exec { 'get_nessus_version':
-    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /tmp/nessus_version 2>/dev/null',
-    creates => '/tmp/nessus_version', # Only run if the file doesn't exist
-    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-  }
+# Run nessuscli -v and capture the version into a temporary file
+exec { 'get_nessus_version':
+  command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /tmp/nessus_version 2>/dev/null',
+  creates => '/tmp/nessus_version', # Only run if the file doesn't exist
+  path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+}
 
-  # Read the version from the temporary file
-  $current_version = file('/tmp/nessus_version', default => 'Not Installed')
+# Define a default version if the temporary file doesn't exist
+$current_version = file('/tmp/nessus_version', default => 'Not Installed')
 
-  # Clean up the temporary file
-  exec { 'cleanup_nessus_version_file':
-    command => 'rm -f /tmp/nessus_version',
-    onlyif  => '/usr/bin/test -f /tmp/nessus_version', # Only run if the file exists
-    require => Exec['get_nessus_version'],    # Ensure cleanup happens after reading the file
-    path    => ['/usr/bin', '/usr/sbin', '/bin/', '/sbin'],
-  }
+# Clean up the temporary file after processing
+exec { 'cleanup_nessus_version_file':
+  command => 'rm -f /tmp/nessus_version',
+  onlyif  => 'test -f /tmp/nessus_version',
+  require => [Exec['get_nessus_version']],
+}
 
-  # Notify resource to display the extracted version
-  notify { 'NessusAgent Version':
-    message => "The current version of NessusAgent is: ${current_version}",
-    require => Exec['cleanup_nessus_version_file'], # Ensure cleanup completes before notifying
-  }
+# Output the captured version using a notify resource
+notify { 'NessusAgent Version':
+  message => "The current version of NessusAgent is: ${current_version}",
+  require => Exec['cleanup_nessus_version_file'],
+}
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
