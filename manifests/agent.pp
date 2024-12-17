@@ -46,13 +46,16 @@ class tenable::agent (
 
   # Run `rpm` to check the package and save output to a file
   exec { 'get_rpm_version':
-    command => '/usr/bin/rpm -q NessusAgent | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\' > /tmp/nessus_version',
+    command => '/usr/bin/rpm -q NessusAgent | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\' > /var/log/puppetlabs/puppet/nessus_version',
     path    => ['/bin', '/usr/bin', '/sbin', '/usr/sbin'],
     creates => '/tmp/nessus_version', # Only runs if the file doesn't exist
   }
 
   # Read the version from the output file or default to "Not Installed"
-  $current_version = file('/tmp/nessus_version', default => 'Not Installed')
+  $current_version = $file_output ? {
+    undef => 'Not Installed',
+    default => file('/var/log/puppetlabs/puppet/nessus_version'),
+  }
 
   # Notify the result
   notify { "RPM Package Version":
