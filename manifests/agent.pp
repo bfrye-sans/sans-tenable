@@ -48,20 +48,28 @@ class tenable::agent (
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $current_version     = '/tmp/nessus_version_output.txt'
 
-  # check /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt and if it doesn't exist, find current nessus version and write it to that file
-  if !file_exists('/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt') {
-    exec { 'get_nessus_agent_version':
-      command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "Not Installed" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
-      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-    }
-  } else {
-    file { '/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt':
-      ensure  => file,
-      content => 'Not Installed',
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0644',
-    }
+  # Ensure the facts.d directory exists
+  file { '/opt/nessus_agent/facter/facts.d':
+    ensure => 'directory',
+    owner  => 'root',
+    group  => 'root',
+    mode   => '0755',
+  }
+
+  # Populate the Nessus version fact file only if it doesn't exist
+  exec { 'get_nessus_agent_version':
+    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt || echo "Not Installed" > /opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',
+    creates => '/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt',  # Ensures this runs only if the file does not exist
+    path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+  }
+
+  # Ensure the fact file exists with appropriate permissions
+  file { '/opt/nessus_agent/facter/facts.d/nessus_agent_version.txt':
+    ensure  => 'file',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    require => Exec['get_nessus_agent_version'],
   }
 
   exec { 'compare_nessus_version':
