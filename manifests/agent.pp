@@ -45,27 +45,26 @@ class tenable::agent (
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
 ) {
+  $current_version = inline_template('<%=
+    begin
+      # Run nessuscli to get the version
+      output = %x{/opt/nessus_agent/sbin/nessuscli -v 2>/dev/null}.strip
 
-# Extract the version of NessusAgent or return "Not Installed"
-$current_version = inline_template('<%=
-  begin
-    output = %x{/usr/bin/rpm -q NessusAgent 2>/dev/null}.strip
-    if output =~ /NessusAgent-(\d+\.\d+\.\d+)/
-      $1 # Return captured version
-    else
-      "Not Installed"
+      # Match version in format x.y.z using regex
+      if output =~ /NessusAgent\s+(\d+\.\d+\.\d+)/
+        $1 # Return the captured version number
+      else
+        "Not Installed" # Fallback if no version is found
+      end
+    rescue
+      "Not Installed" # Fallback if the command fails
     end
-  rescue
-    "Not Installed"
-  end
-%>')
-notify { 'Debug RPM Versions':
-  message => inline_template('<%= %x{/usr/bin/rpm -q NessusAgent 2>/dev/null}.strip %>'),
-}
-# Use the extracted value in a notify resource
-notify { "Current NessusAgent Version":
-  message => "The current version of NessusAgent is: ${current_version}",
-}
+  %>')
+
+  # Display the output for verification
+  notify { 'Nessus Agent Version':
+    message => "The current version of NessusAgent is: ${current_version}",
+  }
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if versioncmp($current_version, $version) < 0 or $current_version == 'Not Installed' {
