@@ -64,17 +64,17 @@ class tenable::agent (
       $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       exec { 'download_nessus_agent':
-        command => "/usr/bin/curl -o /tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm ${package_source}",
+        command => "/usr/bin/curl -L -o ${download_path} ${package_source}",
         creates => $download_path,
       }
 
       Package { 'NessusAgent':
-        ensure   => $version,
+        ensure   => 'installed',
         source   => $download_path,
         provider => 'rpm',
         require  => Exec['download_nessus_agent'],
       }
-      
+
       notify { "Nessus Agent version: ${version} installed.": }
       }
   } elsif $current_version == $version {
