@@ -84,11 +84,6 @@ class tenable::agent (
     }
   }
 
-  # clean up our temp file since we won't need it any longer
-  file { $tmp_file:
-    ensure => 'absent',
-  }
-
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) > 0) {
     # RHEL Releases
