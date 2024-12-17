@@ -58,8 +58,8 @@ class tenable::agent (
 
   # Populate the Nessus version fact file conditionally
   exec { 'get_nessus_agent_version':
-    command => "/opt/nessus_agent/sbin/nessuscli -v | sed -n 's/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p' > ${file_path} || echo 0 > ${file_path}",
-    unless  => "/usr/bin/test -f ${file_path}",  # Run only if the file doesn't exist
+    command => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt || echo 0 > /opt/puppetlabs/facter/facts.d/nessus_version.txt',
+    unless  => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',  # Run only if the file doesn't exist
     path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
   }
 
