@@ -46,19 +46,18 @@ class tenable::agent (
   $arch = $facts['os']['architecture'],
 ) {
 
-# Extract the current version of NessusAgent and handle "Not Installed"
-String $current_version = inline_template('<%=
+# Extract the version of NessusAgent or return "Not Installed"
+$current_version = inline_template('<%=
   begin
-    # Run the rpm command and capture the output
+    # Run rpm query and filter the version
     output = %x{/usr/bin/rpm -q NessusAgent 2>/dev/null | sed -n \'s/.*NessusAgent-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'}.strip
-    # Check if the output is empty and set a fallback
     output.empty? ? "Not Installed" : output
   rescue
     "Not Installed"
   end
 %>')
 
-# Use the extracted version in a notify resource
+# Use the extracted value in a notify resource
 notify { "Current NessusAgent Version":
   message => "The current version of NessusAgent is: ${current_version}",
 }
