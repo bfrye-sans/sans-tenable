@@ -30,37 +30,89 @@
 #     Executes the start command for the Nessus service, but only if the package is updated.
 
 class tenable::scanner (
-
+  String $service_ensure = 'running',
+  Boolean $service_enable = true,
+  $major_release = $facts['os']['release']['major'],
+  $arch = $facts['os']['architecture'],
 ) {
-  # Grab the current version of the Nessus scanner.
-  $current_version = inline_template('<%= `/opt/nessus/sbin/nessusd -v | sed -n \'s/.*Nessus) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/\\1/p\'`.strip %>')
+  $file_path = '/opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt'
+
+  # Ensure the facts.d directory exists
+  file { '/opt/puppetlabs/facter/facts.d':
+    ensure => 'directory',
+    owner  => 'root',
+    group  => 'root',
+    mode   => '0755',
+  }
+
+  # Populate the Nessus scanner version fact file conditionally
+  exec { 'get_nessus_scanner_version':
+    command   => '/bin/bash -c "if command -v /opt/nessus/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus/sbin/nessuscli -v | sed -n \"s/.*Nessus) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_scanner_version=\\1/p\" > /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt; else echo \"nessus_scanner_version=0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt; fi"',
+    unless    => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt',
+    path      => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    logoutput => true,
+    require   => File['/opt/puppetlabs/facter/facts.d'],
+  }
+
+  # Ensure the fact file has proper permissions
+  file { $file_path:
+    ensure  => 'file',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    require => Exec['get_nessus_scanner_version'],
+  }
+
+  if $facts['nessus_scanner_version'] {
+    # Assign the current version of the Nessus scanner to a variable so we can determine if it's eligible for upgrade
+    $current_version = $facts['nessus_scanner_version']
+  } else {
+    # No version fact found, so we'll assume it's not installed
+    $current_version = '0.0.0'
+  }
+
+
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
-  if versioncmp($current_version, $version) < 0 {
+  if ($current_version == 'Not Installed') or (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
-      # Grab the major release and architecture.
-      $major_release = $facts['os']['release']['major']
-      $arch = $facts['os']['architecture']
-      # Find out the newest version of the Nessus scanner.      
-      $newest_version = inline_template('<%= `curl -s https://www.tenable.com/downloads/api/v2/pages/nessus | sed -n \'s/.*"version": *"\\([0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\.[0-9]\\{1,2\\}\\)".*/\\1/p\'`.strip %>')
-      # If the newest version is greater than the current version, download and install it.
-      if versioncmp($extracted_version, $version) > 0 {
-        exec { 'download_nessus_agent':
-          command => "rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus/Nessus-latest-el${major_release}.${arch}.rpm",
-        }
-
-        notify { "Nessus Service version: ${extracted_version} installed.": }
+      # Grab the major release and architecture. 
+      # Download the package from Tenable API
+      $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-latest-el${major_release}.${arch}.rpm"
+      $download_path = "/tmp/Nessus-${version}-el${major_release}.${arch}.rpm"
+      exec { 'download_nessus_scanner':
+        command => "/usr/bin/curl -L -o ${download_path} ${package_source}",
+        creates => $download_path,
       }
-    } else {
-      fail('Unsupported OS family.')
-    }
-  }
-  # Ensure the Nessus service is running and enabled.
-  service { 'nessusd':
-    ensure     => running,
-    enable     => true,
-    hasstatus  => true,
-    hasrestart => true,
-    require    => Package['Nessus'],
-  }
-}
+
+      # Install the package
+      Package { 'nessusd':
+        ensure   => 'installed',
+        source   => $download_path,
+        provider => 'rpm',
+        require  => Exec['download_nessus_scanner'],
+      }
+
+      # Clean up the downloaded package
+      exec { 'cleanup_nessus_scanner':
+        command => "/bin/rm -f ${download_path}",
+        onlyif => "/usr/bin/test -f ${download_path}",
+        require => Package['nessusd'],
+      }
+
+      # Generate the version file dynamically after installation/upgrade
+      exec { 'reset_nessus_scanner_version':
+        command     => '/opt/nessus/sbin/nessuscli -v | sed -n "s/.*Nessus) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_scanner_version=\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt || echo \"nessus_scanner_version=0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt',
+        path        => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+        require     => File['/opt/puppetlabs/facter/facts.d'],
+      }
+
+      # Notify the exec resource after package installation/upgrade
+      Package['nessusd'] -> Exec['reset_nessus_scanner_version']
+
+      # Configure scanner
+      service { 'nessusd':
+        ensure  => $service_ensure,
+        enable  => $service_enable,
+        require => Package['nessusd'],
+      }
