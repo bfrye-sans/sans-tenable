@@ -67,7 +67,7 @@ class tenable::agent (
     if $facts['os']['family'] == 'RedHat' {
       # Grab the major release and architecture.
       exec { 'download_nessus_agent':
-        command => "rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
+        command => "/usr/bin/rpm -i https://www.tenable.com/downloads/api/v2/pages/nessus-agents/NessusAgent-latest-el${major_release}.${arch}.rpm",
       }
 
       notify { "Nessus Agent version: ${version} installed.": }
