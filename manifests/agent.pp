@@ -61,6 +61,7 @@ class tenable::agent (
     # RHEL Releases
     if $facts['os']['family'] == 'RedHat' {
       # Download the package from Tenable API
+      notify { "debug nessus: Desired: ${version} ${major_release} ${arch} Hiera set: ${current_version}": }
       $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/files/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       exec { 'download_nessus_agent':
