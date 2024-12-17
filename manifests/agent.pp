@@ -73,7 +73,7 @@ notify { "Current NessusAgent Version":
     if $facts['os']['family'] == 'RedHat' {
       # Download the package from Tenable API
       notify { "debug nessus: Version: ${version} Current Version: ${current_version}": }
-      $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/files/NessusAgent-${version}-el${major_release}.${arch}.rpm"
+      $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus-agents/files/NessusAgent-latest-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/NessusAgent-${version}-el${major_release}.${arch}.rpm"
       exec { 'download_nessus_agent':
         command => "/usr/bin/curl -L -o ${download_path} ${package_source}",
