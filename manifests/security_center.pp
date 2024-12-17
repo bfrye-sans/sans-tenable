@@ -51,11 +51,11 @@ class tenable::security_center (
     content => $license_key,
     owner   => 'tns',
     group   => 'tns',
-    mode    -> '0600',
+    mode    => '0600',
   }
 
   # restart the service if the license key changes
-  File['/opt/sc/daemons/license.key'] -> Service['nessusd']
+  File['/opt/sc/daemons/license.key'] -> Service['SecurityCenter']
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if (versioncmp($current_version, $version) < 0) {
@@ -82,7 +82,7 @@ class tenable::security_center (
         }
         # Backup the current configuration
         exec { 'backup_nessus_security_center':
-          command => "tar -pzcf /opt/sc/backup/sc_backup_$(date +%Y%m%d).tar /opt/sc",
+          command => '/usr/bin/tar -pzcf /opt/sc/backup/sc_backup_$(date +%Y%m%d).tar /opt/sc',
           onlyif => '/usr/bin/test -d /opt/sc',
         }
       }
