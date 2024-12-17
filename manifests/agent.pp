@@ -113,7 +113,6 @@ class tenable::agent (
         command     => '/opt/nessus_agent/sbin/nessuscli -v | sed -n "s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_version=\\1/p" > /opt/puppetlabs/facter/facts.d/nessus_version.txt || echo "Not Installed" > /opt/puppetlabs/facter/facts.d/nessus_version.txt',
         path        => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
         require     => File['/opt/puppetlabs/facter/facts.d'],
-        refreshonly => true,
       }
 
       # Notify the exec resource after package installation/upgrade
