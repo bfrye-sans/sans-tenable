@@ -35,6 +35,8 @@ class tenable::scanner (
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
+  Optional[Variant[String, Undef]] $proxy_host = undef,
+  Optional[Variant[Integer, Undef]] $proxy_port = undef,
 ) {
   $file_path = '/opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt'
 
@@ -73,8 +75,9 @@ class tenable::scanner (
       # Download the package from Tenable API
       $package_source = "https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-latest-el${major_release}.${arch}.rpm"
       $download_path = "/tmp/Nessus-${version}-el${major_release}.${arch}.rpm"
+      $proxy_option = $proxy_host ? { undef => '', default => "--proxy ${proxy_host}:${proxy_port}" }
       exec { 'download_nessus_scanner':
-        command => "/usr/bin/curl -L -o ${download_path} ${package_source}",
+        command => "/usr/bin/curl -L -o ${download_path} ${proxy_option} ${package_source}"
         creates => $download_path,
       }
 
