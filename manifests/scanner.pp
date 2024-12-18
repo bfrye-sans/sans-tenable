@@ -38,14 +38,6 @@ class tenable::scanner (
 ) {
   $file_path = '/opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt'
 
-  # Ensure the facts.d directory exists
-  file { '/opt/puppetlabs/facter/facts.d':
-    ensure => 'directory',
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0755',
-  }
-
   # Populate the Nessus scanner version fact file conditionally
   exec { 'get_nessus_scanner_version':
     command   => '/bin/bash -c "if command -v /opt/nessus/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus/sbin/nessuscli -v | sed -n \"s/.*Nessus) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_scanner_version=\\1/p\" > /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt; else echo \"nessus_scanner_version=0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_scanner_version.txt; fi"',
