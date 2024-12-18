@@ -12,14 +12,6 @@ class tenable::security_center (
 ) {
   $file_path = '/opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt'
 
-  # Ensure the facts.d directory exists
-  file { '/opt/puppetlabs/facter/facts.d':
-    ensure => 'directory',
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0755',
-  }
-
   # Populate the Nessus security center version fact file conditionally
   exec { 'get_nessus_security_center_version':
     command => '/bin/bash -c "if rpm -q SecurityCenter > /dev/null 2>&1; then rpm -q SecurityCenter | sed -n \'s/SecurityCenter-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_security_center_version=\\1/p\' > ${file_path}; else echo \'nessus_security_center_version=0.0.0\' > ${file_path}; fi"',
