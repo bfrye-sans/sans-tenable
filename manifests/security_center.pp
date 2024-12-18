@@ -8,6 +8,7 @@ class tenable::security_center (
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
+  Boolean $backup = false,
 ) {
   $file_path = '/opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt'
 
