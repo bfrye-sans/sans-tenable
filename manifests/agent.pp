@@ -94,9 +94,10 @@ class tenable::agent (
       onlyif  => '/usr/bin/rpm -q NessusAgent',
       path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     }
-    # remove the old version fact
-    file { $file_path:
-      ensure => 'absent',
+    # remove the old version file with exec since the file is already declared
+    exec { 'remove_nessus_version':
+      command => '/bin/rm -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
+      onlyif  => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
     }
     # and finally clear the nessus directory
     file { '/opt/nessus_agent':
