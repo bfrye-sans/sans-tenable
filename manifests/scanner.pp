@@ -77,7 +77,7 @@ class tenable::scanner (
       $download_path = "/tmp/Nessus-${version}-el${major_release}.${arch}.rpm"
       $proxy_option = $proxy_host ? { undef => '', default => "--proxy ${proxy_host}:${proxy_port}" }
       exec { 'download_nessus_scanner':
-        command => "/usr/bin/curl -L -o ${download_path} ${proxy_option} ${package_source}"
+        command => "/usr/bin/curl -L -o ${download_path} ${proxy_option} ${package_source}",
         creates => $download_path,
       }
 
