@@ -79,6 +79,31 @@ class tenable::agent (
     $current_version = '0.0.0'
   }
 
+  # This section can go away after a while, but we're going to remove any old NessusAgent packages
+  # installed prior to using this module.
+  if $current_version == '10.7.3' {
+    # we should try to unlink it as well just in case
+    exec { 'unlink_nessus_agent':
+      command => '/opt/nessus_agent/sbin/nessuscli agent unlink',
+      onlyif  => '/usr/bin/rpm -q NessusAgent',
+      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    }
+    # remove the package
+    exec { 'autoremove_nessus_agent':
+      command => '/usr/bin/dnf autoremove NessusAgent -y',
+      onlyif  => '/usr/bin/rpm -q NessusAgent',
+      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+    }
+    # remove the old version fact
+    file { $file_path:
+      ensure => 'absent',
+    }
+    # and finally clear the nessus directory
+    file { '/opt/nessus_agent':
+      ensure => 'absent',
+    }
+  }
+
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
