@@ -82,12 +82,6 @@ class tenable::agent (
   # This section can go away after a while, but we're going to remove any old NessusAgent packages
   # installed prior to using this module.
   if $current_version == '10.7.3' {
-    # we should try to unlink it as well just in case
-    exec { 'unlink_nessus_agent':
-      command => '/opt/nessus_agent/sbin/nessuscli agent unlink',
-      onlyif  => '/usr/bin/rpm -q NessusAgent',
-      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-    }
     # remove the package
     exec { 'autoremove_nessus_agent':
       command => '/usr/bin/dnf autoremove NessusAgent -y',
