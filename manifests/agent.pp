@@ -94,8 +94,9 @@ class tenable::agent (
       onlyif  => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
     }
     # and finally clear the nessus directory
-    file { '/opt/nessus_agent':
-      ensure => 'absent',
+    exec { 'clear_nessus_directory':
+      command => '/bin/rm -rf /opt/nessus_agent',
+      onlyif  => '/usr/bin/test -d /opt/nessus_agent',
     }
   }
 
