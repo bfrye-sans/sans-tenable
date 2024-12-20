@@ -32,14 +32,13 @@ class tenable::security_center (
     require => Exec['get_nessus_security_center_version'],
   }
 
-  if $facts['nessus_security_center_version'] {
+  if $facts['nessus_security_center_version'] == '0.0.0' {
+    # version fact states uninstalled, so no backups
+    $backup = false
+  } else {
     # Assign the current version of the Nessus security center to a variable so we can determine if it's eligible for upgrade
     $current_version = $facts['nessus_security_center_version']
     $backup = true
-  } else {
-    # No version fact found, so we'll assume it's not installed
-    $current_version = '0.0.0'
-    $backup = false
   }
   # create /opt/sc/daemon directory
   file { '/opt/sc/daemons':
