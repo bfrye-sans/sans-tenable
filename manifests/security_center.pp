@@ -34,6 +34,7 @@ class tenable::security_center (
   if $facts['nessus_security_center_version'] == '0.0.0' {
     # version fact states uninstalled, so no backups
     $backup = false
+    $current_version = '0.0.0'
   } else {
     # Assign the current version of the Nessus security center to a variable so we can determine if it's eligible for upgrade
     $current_version = $facts['nessus_security_center_version']
