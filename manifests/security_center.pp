@@ -8,7 +8,7 @@ class tenable::security_center (
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
-  Boolean $backup = false,
+  Boolean $backup,
   Optional[Variant[String, Undef]] $proxy_host = undef,
   Optional[Variant[Integer, Undef]] $proxy_port = undef,
 ) {
@@ -39,6 +39,7 @@ class tenable::security_center (
   } else {
     # No version fact found, so we'll assume it's not installed
     $current_version = '0.0.0'
+    $backup = false
   }
   # create /opt/sc/daemon directory
   file { '/opt/sc/daemons':
@@ -47,7 +48,7 @@ class tenable::security_center (
     group  => 'tns',
     mode   => '0755',
   }
-  
+
   # Lets handle the license key in /opt/sc/daemons
   file { '/opt/sc/daemons/license.key':
     ensure  => 'file',
