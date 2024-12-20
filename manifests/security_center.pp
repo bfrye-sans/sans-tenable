@@ -8,7 +8,6 @@ class tenable::security_center (
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
-  Boolean $backup,
   Optional[Variant[String, Undef]] $proxy_host = undef,
   Optional[Variant[Integer, Undef]] $proxy_port = undef,
 ) {
