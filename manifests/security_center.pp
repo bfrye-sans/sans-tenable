@@ -45,7 +45,6 @@ class tenable::security_center (
   service { 'SecurityCenter':
     ensure  => $service_ensure,
     enable  => $service_enable,
-    require => Package['SecurityCenter'],
   }
 
   # create /opt/sc/daemon directory
