@@ -40,7 +40,14 @@ class tenable::security_center (
     # No version fact found, so we'll assume it's not installed
     $current_version = '0.0.0'
   }
-
+  # create /opt/sc/daemon directory
+  file { '/opt/sc/daemons':
+    ensure => 'directory',
+    owner  => 'tns',
+    group  => 'tns',
+    mode   => '0755',
+  }
+  
   # Lets handle the license key in /opt/sc/daemons
   file { '/opt/sc/daemons/license.key':
     ensure  => 'file',
