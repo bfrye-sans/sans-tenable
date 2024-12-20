@@ -40,6 +40,14 @@ class tenable::security_center (
     $current_version = $facts['nessus_security_center_version']
     $backup = true
   }
+
+  # Configure agent
+  service { 'SecurityCenter':
+    ensure  => $service_ensure,
+    enable  => $service_enable,
+    require => Package['SecurityCenter'],
+  }
+
   # create /opt/sc/daemon directory
   file { '/opt/sc/daemons':
     ensure => 'directory',
@@ -59,6 +67,8 @@ class tenable::security_center (
 
   # restart the service if the license key changes
   File['/opt/sc/daemons/license.key'] -> Service['SecurityCenter']
+
+  Servi
 
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if (versioncmp($current_version, $version) < 0) {
@@ -132,13 +142,6 @@ class tenable::security_center (
 
       # Notify the exec resource after package installation/upgrade
       Package['SecurityCenter'] -> Exec['reset_nessus_security_center_version']
-
-      # Configure agent
-      service { 'SecurityCenter':
-        ensure  => $service_ensure,
-        enable  => $service_enable,
-        require => Package['SecurityCenter'],
-      }
     }
   }
 }
