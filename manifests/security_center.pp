@@ -16,7 +16,7 @@ class tenable::security_center (
 
   # Populate the Nessus security center version fact file conditionally
   exec { 'get_nessus_security_center_version':
-    command => '/bin/bash -c "if rpm -q SecurityCenter > /dev/null 2>&1; then rpm -q SecurityCenter | sed -n \'s/SecurityCenter-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_security_center_version=\\1/p\' > ${file_path}; else echo \'nessus_security_center_version=0.0.0\' > ${file_path}; fi"',
+    command => '/bin/bash -c "if rpm -q SecurityCenter > /dev/null 2>&1; then rpm -q SecurityCenter | sed -n \'s/SecurityCenter-\\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_security_center_version=\\1/p\' > /opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt; else echo \'nessus_security_center_version=0.0.0\' > /opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt; fi"',
     unless    => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_security_center_version.txt',
     path      => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     logoutput => true,

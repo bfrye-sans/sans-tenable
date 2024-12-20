@@ -42,8 +42,10 @@ class tenable::agent (
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
+  Enum['low', 'medium', 'high'] $process_priority = 'medium',
 ) {
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
+  $priority_path   = '/opt/puppetlabs/facter/facts.d/nessus_process_priority.txt'
 
   # Ensure the facts.d directory exists
   file { '/opt/puppetlabs/facter/facts.d':
@@ -53,7 +55,6 @@ class tenable::agent (
     mode   => '0755',
   }
 
-  # Populate the Nessus version fact file conditionally
   exec { 'get_nessus_agent_version':
     command   => '/bin/bash -c "if command -v /opt/nessus_agent/sbin/nessuscli > /dev/null 2>&1; then /opt/nessus_agent/sbin/nessuscli -v | sed -n \"s/.*Nessus Agent) \\([0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\).*/nessus_version=\\1/p\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; else echo \"nessus_version=0.0.0\" > /opt/puppetlabs/facter/facts.d/nessus_version.txt; fi"',
     unless    => '/usr/bin/test -f /opt/puppetlabs/facter/facts.d/nessus_version.txt',
@@ -77,6 +78,15 @@ class tenable::agent (
   } else {
     # No version fact found, so we'll assume it's not installed
     $current_version = '0.0.0'
+  }
+
+  if $facts['nessus_process_priority'] {
+    if $facts['nessus_process_priority'] != $process_priority {
+      exec { 'set_nessus_agent_process_priority':
+        command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
+        path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+      }
+    }
   }
 
   # This section can go away after a while, but we're going to remove any old NessusAgent packages
@@ -143,6 +153,22 @@ class tenable::agent (
         ensure  => $service_ensure,
         enable  => $service_enable,
         require => Package['NessusAgent'],
+      }
+
+      # update the process priority fact
+      file { $priority_path:
+        ensure  => 'file',
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0644',
+        content => "nessus_process_priority=${process_priority}",
+        require => Exec['set_nessus_agent_process_priority'],
+      }
+
+      # Set the process priority
+      exec { 'set_nessus_agent_process_priority':
+        command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
+        require => Service['nessusagent'],
       }
 
       # Register agent if it's not already linked - only run this one time on registration
