@@ -68,8 +68,6 @@ class tenable::security_center (
   # restart the service if the license key changes
   File['/opt/sc/daemons/license.key'] -> Service['SecurityCenter']
 
-  Servi
-
   # Since Tenable doesn't offer a mirrorable repo, we're going to check for updates and download from the API directly.
   if (versioncmp($current_version, $version) < 0) {
     # RHEL Releases
