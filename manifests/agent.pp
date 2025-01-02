@@ -80,10 +80,20 @@ class tenable::agent (
     $current_version = '0.0.0'
   }
 
-  if $facts['nessus_process_priority'] != $process_priority {
+  file { $priority_path:
+    ensure  => 'file',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => "nessus_process_priority=${process_priority}",
+  }
+
+  # if fact is present lets check to see if it matches the required value and if the package is installed
+  if $facts['nessus_process_priority'] != $process_priority and $facts['package']['NessusAgent']['ensure'] == 'installed' {
     exec { 'set_nessus_agent_process_priority':
-      command => "/opt/nessus_agent/sbin/nessuscli fix --set process-priority=${process_priority}",
-      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
+      command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
+      require => File[$priority_path],
+      notify  => Service['nessusagent'],
     }
   }
 
@@ -151,16 +161,6 @@ class tenable::agent (
         ensure  => $service_ensure,
         enable  => $service_enable,
         require => Package['NessusAgent'],
-      }
-
-      # update the process priority fact
-      file { $priority_path:
-        ensure  => 'file',
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        content => "nessus_process_priority=${process_priority}",
-        require => Exec['set_nessus_agent_process_priority'],
       }
 
       # Set the process priority
