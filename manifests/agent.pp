@@ -88,12 +88,11 @@ class tenable::agent (
     content => "nessus_process_priority=${process_priority}",
   }
 
-  # if fact is present lets check to see if it matches the required value and if the package is installed
+  # if fact is present lets check to see if it matches the required value and if the package is installed and restart the agent if needed
   if $facts['nessus_process_priority'] != $process_priority and $facts['nessus_version'] != '0.0.0' {
     exec { 'set_nessus_agent_process_priority':
-      command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
+      command => "/opt/nessus_agent/sbin/nessuscli agent --set process-priority=${process_priority}",
       require => File[$priority_path],
-      notify  => Service['nessusagent'],
     }
   }
 
