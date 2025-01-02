@@ -42,7 +42,7 @@ class tenable::agent (
   String $version,
   $major_release = $facts['os']['release']['major'],
   $arch = $facts['os']['architecture'],
-  Enum['low', 'medium', 'high'] $process_priority = 'medium',
+  Enum['low', 'normal', 'high'] $process_priority = 'normal',
 ) {
   $file_path       = '/opt/puppetlabs/facter/facts.d/nessus_version.txt'
   $priority_path   = '/opt/puppetlabs/facter/facts.d/nessus_process_priority.txt'
