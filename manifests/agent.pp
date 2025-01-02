@@ -80,12 +80,10 @@ class tenable::agent (
     $current_version = '0.0.0'
   }
 
-  if $facts['nessus_process_priority'] {
-    if $facts['nessus_process_priority'] != $process_priority {
-      exec { 'set_nessus_agent_process_priority':
-        command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
-        path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
-      }
+  if $facts['nessus_process_priority'] != $process_priority {
+    exec { 'set_nessus_agent_process_priority':
+      command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
+      path    => ['/usr/bin', '/usr/sbin', '/bin', '/sbin'],
     }
   }
 
