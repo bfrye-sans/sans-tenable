@@ -89,7 +89,7 @@ class tenable::agent (
   }
 
   # if fact is present lets check to see if it matches the required value and if the package is installed
-  if $facts['nessus_process_priority'] != $process_priority and $facts['package']['NessusAgent']['ensure'] == 'installed' {
+  if $facts['nessus_process_priority'] != $process_priority and $facts['package']['NessusAgent'] {
     exec { 'set_nessus_agent_process_priority':
       command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
       require => File[$priority_path],
