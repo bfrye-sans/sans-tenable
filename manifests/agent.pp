@@ -162,12 +162,6 @@ class tenable::agent (
         require => Package['NessusAgent'],
       }
 
-      # Set the process priority
-      exec { 'set_nessus_agent_process_priority':
-        command => "/opt/nessus_agent/sbin/nessuscli agent set --process-priority=${process_priority}",
-        require => Service['nessusagent'],
-      }
-
       # Register agent if it's not already linked - only run this one time on registration
       exec { 'register_nessus_agent':
         command => sprintf(
